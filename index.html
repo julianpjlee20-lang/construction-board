@@ -96,6 +96,34 @@
             cursor: pointer;
         }
         
+        .form-group input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .form-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2e7d32;
+            cursor: pointer;
+        }
+        
+        .form-group input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2e7d32;
+            cursor: pointer;
+            border: none;
+        }
+        
         .preview-area {
             position: relative;
             width: 100%;
@@ -252,6 +280,10 @@
                 <label>拍攝者</label>
                 <input type="text" id="photographer" placeholder="例：Andy">
             </div>
+            <div class="form-group">
+                <label>看板大小：<span id="scaleValue">100%</span></label>
+                <input type="range" id="wmScale" min="50" max="150" value="100" step="5">
+            </div>
         </div>
         
         <!-- 拍照/選擇區 -->
@@ -308,6 +340,8 @@
         const weatherSelect = document.getElementById('weather');
         const photographerInput = document.getElementById('photographer');
         const photoDateInput = document.getElementById('photoDate');
+        const wmScaleInput = document.getElementById('wmScale');
+        const scaleValueSpan = document.getElementById('scaleValue');
         const previewImg = document.getElementById('previewImg');
         const placeholder = document.getElementById('placeholder');
         const watermark = document.getElementById('watermark');
@@ -335,6 +369,8 @@
         weatherSelect.addEventListener('change', updateWatermark);
         photographerInput.addEventListener('input', updateWatermark);
         photoDateInput.addEventListener('input', updateWatermark);
+        wmScaleInput.addEventListener('input', updateWatermarkScale);
+        wmScaleInput.addEventListener('change', saveSettings);
         
         // 儲存設定
         projectNameInput.addEventListener('change', saveSettings);
@@ -354,10 +390,12 @@
                 contractorInput.value = settings.contractor || '';
                 weatherSelect.value = settings.weather || '☀️ 晴';
                 photographerInput.value = settings.photographer || '';
+                wmScaleInput.value = settings.wmScale || 100;
                 if (settings.watermarkPos) {
                     watermarkPos = settings.watermarkPos;
                 }
             }
+            updateWatermarkScale();
             updateWatermark();
         }
         
@@ -369,9 +407,17 @@
                 contractor: contractorInput.value,
                 weather: weatherSelect.value,
                 photographer: photographerInput.value,
+                wmScale: wmScaleInput.value,
                 watermarkPos: watermarkPos
             };
             localStorage.setItem('boardSettings', JSON.stringify(settings));
+        }
+        
+        function updateWatermarkScale() {
+            const scale = wmScaleInput.value / 100;
+            scaleValueSpan.textContent = wmScaleInput.value + '%';
+            watermark.style.transform = `scale(${scale})`;
+            watermark.style.transformOrigin = 'top left';
         }
         
         function updateWatermark() {
@@ -538,10 +584,11 @@
             lines.push('📅 ' + date);
             lines.push('👤 ' + photographer);
             
-            // 浮水印位置和大小
-            const padding = 20 * scale;
-            const fontSize = 24 * scale;
-            const smallFontSize = 18 * scale;
+            // 浮水印位置和大小（應用用戶設定的縮放）
+            const userScale = wmScaleInput.value / 100;
+            const padding = 20 * scale * userScale;
+            const fontSize = 24 * scale * userScale;
+            const smallFontSize = 18 * scale * userScale;
             const lineHeight = smallFontSize * 1.6;
             
             // 計算浮水印寬度
