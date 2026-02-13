@@ -280,10 +280,6 @@
                 <label>拍攝者</label>
                 <input type="text" id="photographer" placeholder="例：Andy">
             </div>
-            <div class="form-group">
-                <label>看板大小：<span id="scaleValue">100%</span></label>
-                <input type="range" id="wmScale" min="50" max="150" value="100" step="5">
-            </div>
         </div>
         
         <!-- 拍照/選擇區 -->
@@ -321,6 +317,10 @@
                     <div class="info-line" id="wmDate">日期</div>
                     <div class="info-line" id="wmPhotographer">拍攝者</div>
                 </div>
+            </div>
+            <div class="form-group hidden" id="scaleControl">
+                <label>看板大小：<span id="scaleValue">100%</span></label>
+                <input type="range" id="wmScale" min="50" max="150" value="100" step="5">
             </div>
             <p class="tip">💡 拖動綠色看板調整位置</p>
             <button class="btn btn-download hidden" id="downloadBtn" onclick="downloadImage()">
@@ -487,6 +487,7 @@
             previewImg.classList.remove('hidden');
             previewImg.src = currentImage.src;
             watermark.classList.remove('hidden');
+            document.getElementById('scaleControl').classList.remove('hidden');
             downloadBtn.classList.remove('hidden');
             
             // 設定浮水印位置
