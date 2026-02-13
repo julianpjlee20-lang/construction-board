@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#2e7d32">
+    <title>工程看板</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2e7d32, #1b5e20);
+            color: white;
+            padding: 16px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .container {
+            padding: 16px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .card-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+        
+        .form-group {
+            margin-bottom: 12px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: #333;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #2e7d32;
+        }
+        
+        .preview-area {
+            position: relative;
+            width: 100%;
+            min-height: 300px;
+            background: #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            touch-action: none;
+        }
+        
+        .preview-area img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .preview-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            color: #999;
+        }
+        
+        .preview-placeholder svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 12px;
+        }
+        
+        .watermark {
+            position: absolute;
+            background: rgba(46, 125, 50, 0.9);
+            color: white;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            line-height: 1.5;
+            cursor: move;
+            user-select: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            max-width: 200px;
+        }
+        
+        .watermark .project-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .watermark .info-line {
+            font-size: 11px;
+            opacity: 0.9;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #2e7d32, #1b5e20);
+            color: white;
+        }
+        
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .btn-download {
+            background: linear-gradient(135deg, #1976d2, #1565c0);
+            color: white;
+            margin-top: 12px;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        #fileInput, #cameraInput {
+            display: none;
+        }
+        
+        .canvas-container {
+            display: none;
+        }
+        
+        .tip {
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📷 工程看板</h1>
+    </div>
+    
+    <div class="container">
+        <!-- 設定區 -->
+        <div class="card">
+            <div class="card-title">📋 看板設定</div>
+            <div class="form-group">
+                <label>工程名稱</label>
+                <input type="text" id="projectName" placeholder="例：向上建設 - 八宅案">
+            </div>
+            <div class="form-group">
+                <label>拍攝者</label>
+                <input type="text" id="photographer" placeholder="例：Andy">
+            </div>
+            <div class="form-group">
+                <label>日期</label>
+                <input type="date" id="photoDate">
+            </div>
+        </div>
+        
+        <!-- 拍照/選擇區 -->
+        <div class="card">
+            <div class="card-title">📸 拍照</div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="openCamera()">
+                    拍照
+                </button>
+                <button class="btn btn-secondary" onclick="openGallery()">
+                    選照片
+                </button>
+            </div>
+            <input type="file" id="cameraInput" accept="image/*" capture="environment">
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+        
+        <!-- 預覽區 -->
+        <div class="card" id="previewCard">
+            <div class="card-title">👁️ 預覽（可拖動看板位置）</div>
+            <div class="preview-area" id="previewArea">
+                <div class="preview-placeholder" id="placeholder">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                    </svg>
+                    <span>拍照或選擇照片</span>
+                </div>
+                <img id="previewImg" class="hidden">
+                <div class="watermark hidden" id="watermark">
+                    <div class="project-name" id="wmProjectName">工程名稱</div>
+                    <div class="info-line" id="wmDate">日期</div>
+                    <div class="info-line" id="wmPhotographer">拍攝者</div>
+                </div>
+            </div>
+            <p class="tip">💡 拖動綠色看板調整位置</p>
+            <button class="btn btn-download hidden" id="downloadBtn" onclick="downloadImage()">
+                💾 下載照片
+            </button>
+        </div>
+    </div>
+    
+    <canvas id="canvas" class="canvas-container"></canvas>
+    
+    <script>
+        // 初始化
+        const projectNameInput = document.getElementById('projectName');
+        const photographerInput = document.getElementById('photographer');
+        const photoDateInput = document.getElementById('photoDate');
+        const previewImg = document.getElementById('previewImg');
+        const placeholder = document.getElementById('placeholder');
+        const watermark = document.getElementById('watermark');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const previewArea = document.getElementById('previewArea');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let currentImage = null;
+        let watermarkPos = { x: 20, y: 20 };
+        let isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
+        
+        // 設定今天日期
+        photoDateInput.value = new Date().toISOString().split('T')[0];
+        
+        // 載入儲存的設定
+        loadSettings();
+        
+        // 監聽輸入變化
+        projectNameInput.addEventListener('input', updateWatermark);
+        photographerInput.addEventListener('input', updateWatermark);
+        photoDateInput.addEventListener('input', updateWatermark);
+        
+        // 儲存設定
+        projectNameInput.addEventListener('change', saveSettings);
+        photographerInput.addEventListener('change', saveSettings);
+        
+        function loadSettings() {
+            const saved = localStorage.getItem('boardSettings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                projectNameInput.value = settings.projectName || '';
+                photographerInput.value = settings.photographer || '';
+                if (settings.watermarkPos) {
+                    watermarkPos = settings.watermarkPos;
+                }
+            }
+            updateWatermark();
+        }
+        
+        function saveSettings() {
+            const settings = {
+                projectName: projectNameInput.value,
+                photographer: photographerInput.value,
+                watermarkPos: watermarkPos
+            };
+            localStorage.setItem('boardSettings', JSON.stringify(settings));
+        }
+        
+        function updateWatermark() {
+            const projectName = projectNameInput.value || '工程名稱';
+            const photographer = photographerInput.value || '拍攝者';
+            const date = photoDateInput.value ? formatDate(photoDateInput.value) : '日期';
+            
+            document.getElementById('wmProjectName').textContent = projectName;
+            document.getElementById('wmDate').textContent = '📅 ' + date;
+            document.getElementById('wmPhotographer').textContent = '👤 ' + photographer;
+        }
+        
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return `${date.getFullYear()}/${(date.getMonth()+1).toString().padStart(2,'0')}/${date.getDate().toString().padStart(2,'0')}`;
+        }
+        
+        function openCamera() {
+            document.getElementById('cameraInput').click();
+        }
+        
+        function openGallery() {
+            document.getElementById('fileInput').click();
+        }
+        
+        document.getElementById('cameraInput').addEventListener('change', handleImageSelect);
+        document.getElementById('fileInput').addEventListener('change', handleImageSelect);
+        
+        function handleImageSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                currentImage = new Image();
+                currentImage.onload = function() {
+                    showPreview();
+                };
+                currentImage.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function showPreview() {
+            placeholder.classList.add('hidden');
+            previewImg.classList.remove('hidden');
+            previewImg.src = currentImage.src;
+            watermark.classList.remove('hidden');
+            downloadBtn.classList.remove('hidden');
+            
+            // 設定浮水印位置
+            updateWatermarkPosition();
+            updateWatermark();
+        }
+        
+        function updateWatermarkPosition() {
+            watermark.style.left = watermarkPos.x + 'px';
+            watermark.style.top = watermarkPos.y + 'px';
+        }
+        
+        // 拖動功能
+        watermark.addEventListener('mousedown', startDrag);
+        watermark.addEventListener('touchstart', startDrag, { passive: false });
+        
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('touchmove', drag, { passive: false });
+        
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchend', endDrag);
+        
+        function startDrag(e) {
+            e.preventDefault();
+            isDragging = true;
+            
+            const pos = getEventPos(e);
+            const rect = watermark.getBoundingClientRect();
+            dragOffset.x = pos.x - rect.left;
+            dragOffset.y = pos.y - rect.top;
+        }
+        
+        function drag(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            
+            const pos = getEventPos(e);
+            const areaRect = previewArea.getBoundingClientRect();
+            const wmRect = watermark.getBoundingClientRect();
+            
+            let newX = pos.x - areaRect.left - dragOffset.x;
+            let newY = pos.y - areaRect.top - dragOffset.y;
+            
+            // 限制在預覽區內
+            newX = Math.max(0, Math.min(newX, areaRect.width - wmRect.width));
+            newY = Math.max(0, Math.min(newY, areaRect.height - wmRect.height));
+            
+            watermarkPos.x = newX;
+            watermarkPos.y = newY;
+            updateWatermarkPosition();
+        }
+        
+        function endDrag() {
+            if (isDragging) {
+                isDragging = false;
+                saveSettings();
+            }
+        }
+        
+        function getEventPos(e) {
+            if (e.touches && e.touches.length > 0) {
+                return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }
+            return { x: e.clientX, y: e.clientY };
+        }
+        
+        function downloadImage() {
+            if (!currentImage) return;
+            
+            // 設定 canvas 大小
+            canvas.width = currentImage.naturalWidth;
+            canvas.height = currentImage.naturalHeight;
+            
+            // 畫原圖
+            ctx.drawImage(currentImage, 0, 0);
+            
+            // 計算縮放比例
+            const scale = currentImage.naturalWidth / previewImg.clientWidth;
+            
+            // 浮水印內容
+            const projectName = projectNameInput.value || '工程名稱';
+            const photographer = photographerInput.value || '拍攝者';
+            const date = photoDateInput.value ? formatDate(photoDateInput.value) : '日期';
+            
+            // 浮水印位置和大小
+            const wmX = watermarkPos.x * scale;
+            const wmY = watermarkPos.y * scale;
+            const padding = 20 * scale;
+            const fontSize = 24 * scale;
+            const smallFontSize = 18 * scale;
+            const lineHeight = fontSize * 1.4;
+            
+            // 計算浮水印寬度
+            ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+            const textWidth = Math.max(
+                ctx.measureText(projectName).width,
+                ctx.measureText('📅 ' + date).width,
+                ctx.measureText('👤 ' + photographer).width
+            );
+            const wmWidth = textWidth + padding * 2;
+            const wmHeight = lineHeight * 3 + padding * 2;
+            
+            // 畫浮水印背景
+            ctx.fillStyle = 'rgba(46, 125, 50, 0.9)';
+            roundRect(ctx, wmX, wmY, wmWidth, wmHeight, 12 * scale);
+            
+            // 畫文字
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+            ctx.fillText(projectName, wmX + padding, wmY + padding + fontSize * 0.8);
+            
+            ctx.font = `${smallFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+            ctx.fillText('📅 ' + date, wmX + padding, wmY + padding + lineHeight + smallFontSize * 0.8);
+            ctx.fillText('👤 ' + photographer, wmX + padding, wmY + padding + lineHeight * 2 + smallFontSize * 0.8);
+            
+            // 下載
+            const link = document.createElement('a');
+            const filename = `${projectName}_${photoDateInput.value || 'photo'}.jpg`;
+            link.download = filename;
+            link.href = canvas.toDataURL('image/jpeg', 0.9);
+            link.click();
+        }
+        
+        function roundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        // 註冊 Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+    </script>
+</body>
+</html>
