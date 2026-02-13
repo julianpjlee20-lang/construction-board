@@ -135,6 +135,7 @@
             border-radius: 6px;
             font-size: 12px;
             line-height: 1.5;
+            cursor: move;
             user-select: none;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             max-width: 240px;
@@ -251,15 +252,6 @@
                 <label>拍攝者</label>
                 <input type="text" id="photographer" placeholder="例：Andy">
             </div>
-            <div class="form-group">
-                <label>看板位置</label>
-                <select id="wmPosition">
-                    <option value="bottom-left">左下</option>
-                    <option value="bottom-right">右下</option>
-                    <option value="top-left">左上</option>
-                    <option value="top-right">右上</option>
-                </select>
-            </div>
         </div>
         
         <!-- 拍照/選擇區 -->
@@ -298,7 +290,7 @@
                     <div class="info-line" id="wmPhotographer">拍攝者</div>
                 </div>
             </div>
-            <p class="tip">💡 使用上方「看板位置」調整位置</p>
+            <p class="tip">💡 拖動綠色看板調整位置</p>
             <button class="btn btn-download hidden" id="downloadBtn" onclick="downloadImage()">
                 💾 下載照片
             </button>
@@ -316,7 +308,6 @@
         const weatherSelect = document.getElementById('weather');
         const photographerInput = document.getElementById('photographer');
         const photoDateInput = document.getElementById('photoDate');
-        const wmPositionSelect = document.getElementById('wmPosition');
         const previewImg = document.getElementById('previewImg');
         const placeholder = document.getElementById('placeholder');
         const watermark = document.getElementById('watermark');
@@ -326,6 +317,9 @@
         const ctx = canvas.getContext('2d');
         
         let currentImage = null;
+        let watermarkPos = { x: 20, y: 20 };
+        let isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
         
         // 設定今天日期
         photoDateInput.value = new Date().toISOString().split('T')[0];
@@ -333,7 +327,7 @@
         // 載入儲存的設定
         loadSettings();
         
-        // 監聯輸入變化
+        // 監聽輸入變化
         projectNameInput.addEventListener('input', updateWatermark);
         locationInput.addEventListener('input', updateWatermark);
         workItemInput.addEventListener('input', updateWatermark);
@@ -341,8 +335,6 @@
         weatherSelect.addEventListener('change', updateWatermark);
         photographerInput.addEventListener('input', updateWatermark);
         photoDateInput.addEventListener('input', updateWatermark);
-        wmPositionSelect.addEventListener('change', updateWatermarkPosition);
-        wmPositionSelect.addEventListener('change', saveSettings);
         
         // 儲存設定
         projectNameInput.addEventListener('change', saveSettings);
@@ -362,7 +354,9 @@
                 contractorInput.value = settings.contractor || '';
                 weatherSelect.value = settings.weather || '☀️ 晴';
                 photographerInput.value = settings.photographer || '';
-                wmPositionSelect.value = settings.wmPosition || 'bottom-left';
+                if (settings.watermarkPos) {
+                    watermarkPos = settings.watermarkPos;
+                }
             }
             updateWatermark();
         }
@@ -375,7 +369,7 @@
                 contractor: contractorInput.value,
                 weather: weatherSelect.value,
                 photographer: photographerInput.value,
-                wmPosition: wmPositionSelect.value
+                watermarkPos: watermarkPos
             };
             localStorage.setItem('boardSettings', JSON.stringify(settings));
         }
@@ -455,37 +449,21 @@
         }
         
         function updateWatermarkPosition() {
-            const pos = wmPositionSelect.value;
-            const margin = 10;
-            
-            // 移除舊的定位
-            watermark.style.left = '';
-            watermark.style.right = '';
-            watermark.style.top = '';
-            watermark.style.bottom = '';
-            
-            switch(pos) {
-                case 'top-left':
-                    watermark.style.left = margin + 'px';
-                    watermark.style.top = margin + 'px';
-                    break;
-                case 'top-right':
-                    watermark.style.right = margin + 'px';
-                    watermark.style.top = margin + 'px';
-                    break;
-                case 'bottom-left':
-                    watermark.style.left = margin + 'px';
-                    watermark.style.bottom = margin + 'px';
-                    break;
-                case 'bottom-right':
-                    watermark.style.right = margin + 'px';
-                    watermark.style.bottom = margin + 'px';
-                    break;
-            }
+            watermark.style.left = watermarkPos.x + 'px';
+            watermark.style.top = watermarkPos.y + 'px';
         }
         
+        // 拖動功能
+        watermark.addEventListener('mousedown', startDrag);
+        watermark.addEventListener('touchstart', startDrag, { passive: false });
+        
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('touchmove', drag, { passive: false });
+        
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchend', endDrag);
+        
         function startDrag(e) {
-            // 已停用拖動功能
             e.preventDefault();
             isDragging = true;
             
@@ -576,30 +554,13 @@
             const wmWidth = maxWidth + padding * 2;
             const wmHeight = fontSize * 1.2 + lineHeight * (lines.length - 1) + padding * 2;
             
-            // 根據選擇的位置計算浮水印座標
-            const pos = wmPositionSelect.value;
-            const margin = 20 * scale;
-            let wmX, wmY;
+            // 計算位置並確保不超出邊界
+            let wmX = watermarkPos.x * scale;
+            let wmY = watermarkPos.y * scale;
             
-            switch(pos) {
-                case 'top-left':
-                    wmX = margin;
-                    wmY = margin;
-                    break;
-                case 'top-right':
-                    wmX = canvas.width - wmWidth - margin;
-                    wmY = margin;
-                    break;
-                case 'bottom-left':
-                    wmX = margin;
-                    wmY = canvas.height - wmHeight - margin;
-                    break;
-                case 'bottom-right':
-                default:
-                    wmX = canvas.width - wmWidth - margin;
-                    wmY = canvas.height - wmHeight - margin;
-                    break;
-            }
+            // 確保浮水印在圖片範圍內
+            wmX = Math.max(0, Math.min(wmX, canvas.width - wmWidth));
+            wmY = Math.max(0, Math.min(wmY, canvas.height - wmHeight));
             
             // 畫浮水印背景
             ctx.fillStyle = 'rgba(46, 125, 50, 0.9)';
