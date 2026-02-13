@@ -539,8 +539,6 @@
             lines.push('👤 ' + photographer);
             
             // 浮水印位置和大小
-            const wmX = watermarkPos.x * scale;
-            const wmY = watermarkPos.y * scale;
             const padding = 20 * scale;
             const fontSize = 24 * scale;
             const smallFontSize = 18 * scale;
@@ -555,6 +553,14 @@
             }
             const wmWidth = maxWidth + padding * 2;
             const wmHeight = fontSize * 1.2 + lineHeight * (lines.length - 1) + padding * 2;
+            
+            // 計算位置並確保不超出邊界
+            let wmX = watermarkPos.x * scale;
+            let wmY = watermarkPos.y * scale;
+            
+            // 確保浮水印在圖片範圍內
+            wmX = Math.max(0, Math.min(wmX, canvas.width - wmWidth));
+            wmY = Math.max(0, Math.min(wmY, canvas.height - wmHeight));
             
             // 畫浮水印背景
             ctx.fillStyle = 'rgba(46, 125, 50, 0.9)';
