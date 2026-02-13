@@ -157,27 +157,40 @@
         
         .watermark {
             position: absolute;
-            background: rgba(46, 125, 50, 0.9);
-            color: white;
-            padding: 10px 14px;
-            border-radius: 6px;
-            font-size: 12px;
-            line-height: 1.5;
-            cursor: move;
             user-select: none;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            max-width: 240px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            cursor: move;
         }
         
-        .watermark .project-name {
-            font-weight: 600;
-            font-size: 14px;
-            margin-bottom: 4px;
+        .wm-table {
+            border-collapse: collapse;
+            background: #2d5f3a;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, 'Microsoft JhengHei', sans-serif;
         }
         
-        .watermark .info-line {
+        .wm-table td {
+            border: 2px solid white;
+            padding: 6px 10px;
             font-size: 11px;
-            opacity: 0.9;
+        }
+        
+        .wm-header {
+            background: #1e4027;
+            font-weight: 700;
+            font-size: 13px;
+            text-align: center;
+        }
+        
+        .wm-label {
+            background: #2d5f3a;
+            font-weight: 600;
+            white-space: nowrap;
+            width: 70px;
+        }
+        
+        .wm-value {
+            background: #357a44;
         }
         
         .btn-group {
@@ -309,13 +322,35 @@
                 </div>
                 <img id="previewImg" class="hidden">
                 <div class="watermark hidden" id="watermark">
-                    <div class="project-name" id="wmProjectName">工程名稱</div>
-                    <div class="info-line" id="wmLocation"></div>
-                    <div class="info-line" id="wmWorkItem"></div>
-                    <div class="info-line" id="wmContractor"></div>
-                    <div class="info-line" id="wmWeather"></div>
-                    <div class="info-line" id="wmDate">日期</div>
-                    <div class="info-line" id="wmPhotographer">拍攝者</div>
+                    <table class="wm-table">
+                        <tr class="wm-header">
+                            <td colspan="2" id="wmProjectName">工程名稱</td>
+                        </tr>
+                        <tr id="wmLocationRow" style="display:none">
+                            <td class="wm-label">施工位置</td>
+                            <td class="wm-value" id="wmLocation"></td>
+                        </tr>
+                        <tr id="wmWorkItemRow" style="display:none">
+                            <td class="wm-label">施工項目</td>
+                            <td class="wm-value" id="wmWorkItem"></td>
+                        </tr>
+                        <tr id="wmContractorRow" style="display:none">
+                            <td class="wm-label">施工廠商</td>
+                            <td class="wm-value" id="wmContractor"></td>
+                        </tr>
+                        <tr>
+                            <td class="wm-label">天氣</td>
+                            <td class="wm-value" id="wmWeather">☀️ 晴</td>
+                        </tr>
+                        <tr>
+                            <td class="wm-label">日期</td>
+                            <td class="wm-value" id="wmDate">日期</td>
+                        </tr>
+                        <tr>
+                            <td class="wm-label">拍攝者</td>
+                            <td class="wm-value" id="wmPhotographer">拍攝者</td>
+                        </tr>
+                    </table>
                 </div>
             </div>
             <div class="form-group hidden" id="scaleControl">
@@ -432,23 +467,37 @@
             document.getElementById('wmProjectName').textContent = projectName;
             
             const wmLocation = document.getElementById('wmLocation');
+            const wmLocationRow = document.getElementById('wmLocationRow');
             const wmWorkItem = document.getElementById('wmWorkItem');
+            const wmWorkItemRow = document.getElementById('wmWorkItemRow');
             const wmContractor = document.getElementById('wmContractor');
+            const wmContractorRow = document.getElementById('wmContractorRow');
             const wmWeather = document.getElementById('wmWeather');
             
-            wmLocation.textContent = location ? '📍 ' + location : '';
-            wmLocation.style.display = location ? 'block' : 'none';
+            if (location) {
+                wmLocation.textContent = location;
+                wmLocationRow.style.display = '';
+            } else {
+                wmLocationRow.style.display = 'none';
+            }
             
-            wmWorkItem.textContent = workItem ? '🔧 ' + workItem : '';
-            wmWorkItem.style.display = workItem ? 'block' : 'none';
+            if (workItem) {
+                wmWorkItem.textContent = workItem;
+                wmWorkItemRow.style.display = '';
+            } else {
+                wmWorkItemRow.style.display = 'none';
+            }
             
-            wmContractor.textContent = contractor ? '🏗️ ' + contractor : '';
-            wmContractor.style.display = contractor ? 'block' : 'none';
+            if (contractor) {
+                wmContractor.textContent = contractor;
+                wmContractorRow.style.display = '';
+            } else {
+                wmContractorRow.style.display = 'none';
+            }
             
             wmWeather.textContent = weather;
-            
-            document.getElementById('wmDate').textContent = '📅 ' + date;
-            document.getElementById('wmPhotographer').textContent = '👤 ' + photographer;
+            document.getElementById('wmDate').textContent = date;
+            document.getElementById('wmPhotographer').textContent = photographer;
         }
         
         function formatDate(dateStr) {
@@ -567,7 +616,7 @@
             // 計算縮放比例
             const scale = currentImage.naturalWidth / previewImg.clientWidth;
             
-            // 浮水印內容
+            // 繪製專業表格式看板
             const projectName = projectNameInput.value || '工程名稱';
             const location = locationInput.value;
             const workItem = workItemInput.value;
@@ -576,55 +625,89 @@
             const photographer = photographerInput.value || '拍攝者';
             const date = photoDateInput.value ? formatDate(photoDateInput.value) : '日期';
             
-            // 建立要顯示的行
-            const lines = [projectName];
-            if (location) lines.push('📍 ' + location);
-            if (workItem) lines.push('🔧 ' + workItem);
-            if (contractor) lines.push('🏗️ ' + contractor);
-            lines.push(weather);
-            lines.push('📅 ' + date);
-            lines.push('👤 ' + photographer);
-            
-            // 浮水印位置和大小（應用用戶設定的縮放）
             const userScale = wmScaleInput.value / 100;
-            const padding = 20 * scale * userScale;
-            const fontSize = 24 * scale * userScale;
-            const smallFontSize = 18 * scale * userScale;
-            const lineHeight = smallFontSize * 1.6;
+            const baseSize = scale * userScale;
             
-            // 計算浮水印寬度
-            ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
-            let maxWidth = ctx.measureText(projectName).width;
-            ctx.font = `${smallFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
-            for (let i = 1; i < lines.length; i++) {
-                maxWidth = Math.max(maxWidth, ctx.measureText(lines[i]).width);
-            }
-            const wmWidth = maxWidth + padding * 2;
-            const wmHeight = fontSize * 1.2 + lineHeight * (lines.length - 1) + padding * 2;
+            // 表格參數
+            const cellPadding = 10 * baseSize;
+            const borderWidth = 2 * baseSize;
+            const fontSize = 11 * baseSize;
+            const headerFontSize = 13 * baseSize;
+            const labelWidth = 70 * baseSize;
+            const valueWidth = 150 * baseSize;
+            const rowHeight = 24 * baseSize;
+            const headerHeight = 32 * baseSize;
             
-            // 計算位置並確保不超出邊界
+            // 建立行資料
+            const rows = [];
+            rows.push({ type: 'header', label: projectName });
+            if (location) rows.push({ type: 'data', label: '施工位置', value: location });
+            if (workItem) rows.push({ type: 'data', label: '施工項目', value: workItem });
+            if (contractor) rows.push({ type: 'data', label: '施工廠商', value: contractor });
+            rows.push({ type: 'data', label: '天氣', value: weather });
+            rows.push({ type: 'data', label: '日期', value: date });
+            rows.push({ type: 'data', label: '拍攝者', value: photographer });
+            
+            // 計算表格大小
+            const tableWidth = labelWidth + valueWidth + borderWidth * 3;
+            const tableHeight = headerHeight + (rows.length - 1) * rowHeight + borderWidth * rows.length;
+            
+            // 計算位置
             let wmX = watermarkPos.x * scale;
             let wmY = watermarkPos.y * scale;
+            wmX = Math.max(0, Math.min(wmX, canvas.width - tableWidth));
+            wmY = Math.max(0, Math.min(wmY, canvas.height - tableHeight));
             
-            // 確保浮水印在圖片範圍內
-            wmX = Math.max(0, Math.min(wmX, canvas.width - wmWidth));
-            wmY = Math.max(0, Math.min(wmY, canvas.height - wmHeight));
+            // 繪製表格
+            let currentY = wmY;
             
-            // 畫浮水印背景
-            ctx.fillStyle = 'rgba(46, 125, 50, 0.9)';
-            roundRect(ctx, wmX, wmY, wmWidth, wmHeight, 12 * scale);
-            
-            // 畫文字
-            ctx.fillStyle = 'white';
-            ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
-            ctx.fillText(projectName, wmX + padding, wmY + padding + fontSize * 0.8);
-            
-            ctx.font = `${smallFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
-            let currentY = wmY + padding + fontSize * 1.2;
-            for (let i = 1; i < lines.length; i++) {
-                ctx.fillText(lines[i], wmX + padding, currentY + smallFontSize * 0.8);
-                currentY += lineHeight;
-            }
+            rows.forEach((row, index) => {
+                const h = row.type === 'header' ? headerHeight : rowHeight;
+                
+                if (row.type === 'header') {
+                    // 標題行
+                    ctx.fillStyle = '#1e4027';
+                    ctx.fillRect(wmX, currentY, tableWidth, h);
+                    
+                    // 邊框
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = borderWidth;
+                    ctx.strokeRect(wmX, currentY, tableWidth, h);
+                    
+                    // 文字
+                    ctx.fillStyle = 'white';
+                    ctx.font = `bold ${headerFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(row.label, wmX + tableWidth / 2, currentY + h / 2);
+                } else {
+                    // 資料行 - 標籤欄
+                    ctx.fillStyle = '#2d5f3a';
+                    ctx.fillRect(wmX, currentY, labelWidth + borderWidth, h);
+                    
+                    // 資料行 - 內容欄
+                    ctx.fillStyle = '#357a44';
+                    ctx.fillRect(wmX + labelWidth + borderWidth, currentY, valueWidth + borderWidth * 2, h);
+                    
+                    // 邊框
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = borderWidth;
+                    ctx.strokeRect(wmX, currentY, labelWidth + borderWidth, h);
+                    ctx.strokeRect(wmX + labelWidth + borderWidth, currentY, valueWidth + borderWidth * 2, h);
+                    
+                    // 文字
+                    ctx.fillStyle = 'white';
+                    ctx.font = `600 ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(row.label, wmX + cellPadding, currentY + h / 2);
+                    
+                    ctx.font = `${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+                    ctx.fillText(row.value, wmX + labelWidth + borderWidth + cellPadding, currentY + h / 2);
+                }
+                
+                currentY += h;
+            });
             
             // 下載
             const link = document.createElement('a');
@@ -632,21 +715,6 @@
             link.download = filename;
             link.href = canvas.toDataURL('image/jpeg', 0.9);
             link.click();
-        }
-        
-        function roundRect(ctx, x, y, width, height, radius) {
-            ctx.beginPath();
-            ctx.moveTo(x + radius, y);
-            ctx.lineTo(x + width - radius, y);
-            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-            ctx.lineTo(x + width, y + height - radius);
-            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-            ctx.lineTo(x + radius, y + height);
-            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-            ctx.lineTo(x, y + radius);
-            ctx.quadraticCurveTo(x, y, x + radius, y);
-            ctx.closePath();
-            ctx.fill();
         }
         
         // 註冊 Service Worker
