@@ -234,6 +234,35 @@
             display: none !important;
         }
         
+        .custom-field-item {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            align-items: flex-start;
+        }
+        
+        .custom-field-item input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .custom-field-item button {
+            padding: 10px 14px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .custom-field-item button:active {
+            transform: scale(0.95);
+        }
+        
         #fileInput, #cameraInput {
             display: none;
         }
@@ -295,6 +324,15 @@
             </div>
         </div>
         
+        <!-- 自訂欄位區 -->
+        <div class="card">
+            <div class="card-title">➕ 自訂欄位</div>
+            <div id="customFieldsList"></div>
+            <button class="btn btn-secondary" onclick="addCustomField()" style="width: 100%; margin-top: 8px;">
+                + 新增欄位
+            </button>
+        </div>
+        
         <!-- 拍照/選擇區 -->
         <div class="card">
             <div class="card-title">📸 拍照</div>
@@ -338,6 +376,7 @@
                             <td class="wm-label">施工廠商</td>
                             <td class="wm-value" id="wmContractor"></td>
                         </tr>
+                        <tbody id="wmCustomFields"></tbody>
                         <tr>
                             <td class="wm-label">天氣</td>
                             <td class="wm-value" id="wmWeather">☀️ 晴</td>
@@ -389,6 +428,7 @@
         let watermarkPos = { x: 20, y: 20 };
         let isDragging = false;
         let dragOffset = { x: 0, y: 0 };
+        let customFields = [];
         
         // 設定今天日期
         photoDateInput.value = new Date().toISOString().split('T')[0];
@@ -426,10 +466,12 @@
                 weatherSelect.value = settings.weather || '☀️ 晴';
                 photographerInput.value = settings.photographer || '';
                 wmScaleInput.value = settings.wmScale || 100;
+                customFields = settings.customFields || [];
                 if (settings.watermarkPos) {
                     watermarkPos = settings.watermarkPos;
                 }
             }
+            renderCustomFields();
             updateWatermarkScale();
             updateWatermark();
         }
@@ -443,6 +485,7 @@
                 weather: weatherSelect.value,
                 photographer: photographerInput.value,
                 wmScale: wmScaleInput.value,
+                customFields: customFields,
                 watermarkPos: watermarkPos
             };
             localStorage.setItem('boardSettings', JSON.stringify(settings));
@@ -498,11 +541,57 @@
             wmWeather.textContent = weather;
             document.getElementById('wmDate').textContent = date;
             document.getElementById('wmPhotographer').textContent = photographer;
+            
+            // 更新自訂欄位
+            const wmCustomFieldsContainer = document.getElementById('wmCustomFields');
+            wmCustomFieldsContainer.innerHTML = '';
+            customFields.forEach(field => {
+                if (field.label && field.value) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="wm-label">${field.label}</td>
+                        <td class="wm-value">${field.value}</td>
+                    `;
+                    wmCustomFieldsContainer.appendChild(tr);
+                }
+            });
         }
         
         function formatDate(dateStr) {
             const date = new Date(dateStr);
             return `${date.getFullYear()}/${(date.getMonth()+1).toString().padStart(2,'0')}/${date.getDate().toString().padStart(2,'0')}`;
+        }
+        
+        // 自訂欄位功能
+        function addCustomField() {
+            customFields.push({ label: '', value: '' });
+            renderCustomFields();
+            saveSettings();
+        }
+        
+        function removeCustomField(index) {
+            customFields.splice(index, 1);
+            renderCustomFields();
+            updateWatermark();
+            saveSettings();
+        }
+        
+        function renderCustomFields() {
+            const container = document.getElementById('customFieldsList');
+            container.innerHTML = '';
+            
+            customFields.forEach((field, index) => {
+                const div = document.createElement('div');
+                div.className = 'custom-field-item';
+                div.innerHTML = `
+                    <input type="text" placeholder="標籤（如：樓層）" value="${field.label}" 
+                           onchange="customFields[${index}].label = this.value; updateWatermark(); saveSettings();">
+                    <input type="text" placeholder="內容（如：B1F）" value="${field.value}" 
+                           onchange="customFields[${index}].value = this.value; updateWatermark(); saveSettings();">
+                    <button onclick="removeCustomField(${index})">✕</button>
+                `;
+                container.appendChild(div);
+            });
         }
         
         function openCamera() {
@@ -644,6 +733,14 @@
             if (location) rows.push({ type: 'data', label: '施工位置', value: location });
             if (workItem) rows.push({ type: 'data', label: '施工項目', value: workItem });
             if (contractor) rows.push({ type: 'data', label: '施工廠商', value: contractor });
+            
+            // 加入自訂欄位
+            customFields.forEach(field => {
+                if (field.label && field.value) {
+                    rows.push({ type: 'data', label: field.label, value: field.value });
+                }
+            });
+            
             rows.push({ type: 'data', label: '天氣', value: weather });
             rows.push({ type: 'data', label: '日期', value: date });
             rows.push({ type: 'data', label: '拍攝者', value: photographer });
