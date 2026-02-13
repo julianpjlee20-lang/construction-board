@@ -80,9 +80,20 @@
             transition: border-color 0.2s;
         }
         
-        .form-group input:focus {
+        .form-group input:focus,
+        .form-group select:focus {
             outline: none;
             border-color: #2e7d32;
+        }
+        
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
         }
         
         .preview-area {
@@ -127,7 +138,7 @@
             cursor: move;
             user-select: none;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            max-width: 200px;
+            max-width: 240px;
         }
         
         .watermark .project-name {
@@ -212,12 +223,34 @@
                 <input type="text" id="projectName" placeholder="例：向上建設 - 八宅案">
             </div>
             <div class="form-group">
-                <label>拍攝者</label>
-                <input type="text" id="photographer" placeholder="例：Andy">
+                <label>施工位置</label>
+                <input type="text" id="location" placeholder="例：B1F 機電室">
+            </div>
+            <div class="form-group">
+                <label>施工項目</label>
+                <input type="text" id="workItem" placeholder="例：配管工程">
+            </div>
+            <div class="form-group">
+                <label>承包商</label>
+                <input type="text" id="contractor" placeholder="例：XX營造">
+            </div>
+            <div class="form-group">
+                <label>天氣</label>
+                <select id="weather">
+                    <option value="☀️ 晴">☀️ 晴</option>
+                    <option value="⛅ 多雲">⛅ 多雲</option>
+                    <option value="☁️ 陰">☁️ 陰</option>
+                    <option value="🌧️ 雨">🌧️ 雨</option>
+                    <option value="⛈️ 雷雨">⛈️ 雷雨</option>
+                </select>
             </div>
             <div class="form-group">
                 <label>日期</label>
                 <input type="date" id="photoDate">
+            </div>
+            <div class="form-group">
+                <label>拍攝者</label>
+                <input type="text" id="photographer" placeholder="例：Andy">
             </div>
         </div>
         
@@ -249,6 +282,10 @@
                 <img id="previewImg" class="hidden">
                 <div class="watermark hidden" id="watermark">
                     <div class="project-name" id="wmProjectName">工程名稱</div>
+                    <div class="info-line" id="wmLocation"></div>
+                    <div class="info-line" id="wmWorkItem"></div>
+                    <div class="info-line" id="wmContractor"></div>
+                    <div class="info-line" id="wmWeather"></div>
                     <div class="info-line" id="wmDate">日期</div>
                     <div class="info-line" id="wmPhotographer">拍攝者</div>
                 </div>
@@ -265,6 +302,10 @@
     <script>
         // 初始化
         const projectNameInput = document.getElementById('projectName');
+        const locationInput = document.getElementById('location');
+        const workItemInput = document.getElementById('workItem');
+        const contractorInput = document.getElementById('contractor');
+        const weatherSelect = document.getElementById('weather');
         const photographerInput = document.getElementById('photographer');
         const photoDateInput = document.getElementById('photoDate');
         const previewImg = document.getElementById('previewImg');
@@ -288,11 +329,19 @@
         
         // 監聽輸入變化
         projectNameInput.addEventListener('input', updateWatermark);
+        locationInput.addEventListener('input', updateWatermark);
+        workItemInput.addEventListener('input', updateWatermark);
+        contractorInput.addEventListener('input', updateWatermark);
+        weatherSelect.addEventListener('change', updateWatermark);
         photographerInput.addEventListener('input', updateWatermark);
         photoDateInput.addEventListener('input', updateWatermark);
         
         // 儲存設定
         projectNameInput.addEventListener('change', saveSettings);
+        locationInput.addEventListener('change', saveSettings);
+        workItemInput.addEventListener('change', saveSettings);
+        contractorInput.addEventListener('change', saveSettings);
+        weatherSelect.addEventListener('change', saveSettings);
         photographerInput.addEventListener('change', saveSettings);
         
         function loadSettings() {
@@ -300,6 +349,10 @@
             if (saved) {
                 const settings = JSON.parse(saved);
                 projectNameInput.value = settings.projectName || '';
+                locationInput.value = settings.location || '';
+                workItemInput.value = settings.workItem || '';
+                contractorInput.value = settings.contractor || '';
+                weatherSelect.value = settings.weather || '☀️ 晴';
                 photographerInput.value = settings.photographer || '';
                 if (settings.watermarkPos) {
                     watermarkPos = settings.watermarkPos;
@@ -311,6 +364,10 @@
         function saveSettings() {
             const settings = {
                 projectName: projectNameInput.value,
+                location: locationInput.value,
+                workItem: workItemInput.value,
+                contractor: contractorInput.value,
+                weather: weatherSelect.value,
                 photographer: photographerInput.value,
                 watermarkPos: watermarkPos
             };
@@ -319,10 +376,31 @@
         
         function updateWatermark() {
             const projectName = projectNameInput.value || '工程名稱';
+            const location = locationInput.value;
+            const workItem = workItemInput.value;
+            const contractor = contractorInput.value;
+            const weather = weatherSelect.value;
             const photographer = photographerInput.value || '拍攝者';
             const date = photoDateInput.value ? formatDate(photoDateInput.value) : '日期';
             
             document.getElementById('wmProjectName').textContent = projectName;
+            
+            const wmLocation = document.getElementById('wmLocation');
+            const wmWorkItem = document.getElementById('wmWorkItem');
+            const wmContractor = document.getElementById('wmContractor');
+            const wmWeather = document.getElementById('wmWeather');
+            
+            wmLocation.textContent = location ? '📍 ' + location : '';
+            wmLocation.style.display = location ? 'block' : 'none';
+            
+            wmWorkItem.textContent = workItem ? '🔧 ' + workItem : '';
+            wmWorkItem.style.display = workItem ? 'block' : 'none';
+            
+            wmContractor.textContent = contractor ? '🏗️ ' + contractor : '';
+            wmContractor.style.display = contractor ? 'block' : 'none';
+            
+            wmWeather.textContent = weather;
+            
             document.getElementById('wmDate').textContent = '📅 ' + date;
             document.getElementById('wmPhotographer').textContent = '👤 ' + photographer;
         }
@@ -444,8 +522,21 @@
             
             // 浮水印內容
             const projectName = projectNameInput.value || '工程名稱';
+            const location = locationInput.value;
+            const workItem = workItemInput.value;
+            const contractor = contractorInput.value;
+            const weather = weatherSelect.value;
             const photographer = photographerInput.value || '拍攝者';
             const date = photoDateInput.value ? formatDate(photoDateInput.value) : '日期';
+            
+            // 建立要顯示的行
+            const lines = [projectName];
+            if (location) lines.push('📍 ' + location);
+            if (workItem) lines.push('🔧 ' + workItem);
+            if (contractor) lines.push('🏗️ ' + contractor);
+            lines.push(weather);
+            lines.push('📅 ' + date);
+            lines.push('👤 ' + photographer);
             
             // 浮水印位置和大小
             const wmX = watermarkPos.x * scale;
@@ -453,17 +544,17 @@
             const padding = 20 * scale;
             const fontSize = 24 * scale;
             const smallFontSize = 18 * scale;
-            const lineHeight = fontSize * 1.4;
+            const lineHeight = smallFontSize * 1.6;
             
             // 計算浮水印寬度
             ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
-            const textWidth = Math.max(
-                ctx.measureText(projectName).width,
-                ctx.measureText('📅 ' + date).width,
-                ctx.measureText('👤 ' + photographer).width
-            );
-            const wmWidth = textWidth + padding * 2;
-            const wmHeight = lineHeight * 3 + padding * 2;
+            let maxWidth = ctx.measureText(projectName).width;
+            ctx.font = `${smallFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+            for (let i = 1; i < lines.length; i++) {
+                maxWidth = Math.max(maxWidth, ctx.measureText(lines[i]).width);
+            }
+            const wmWidth = maxWidth + padding * 2;
+            const wmHeight = fontSize * 1.2 + lineHeight * (lines.length - 1) + padding * 2;
             
             // 畫浮水印背景
             ctx.fillStyle = 'rgba(46, 125, 50, 0.9)';
@@ -475,8 +566,11 @@
             ctx.fillText(projectName, wmX + padding, wmY + padding + fontSize * 0.8);
             
             ctx.font = `${smallFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
-            ctx.fillText('📅 ' + date, wmX + padding, wmY + padding + lineHeight + smallFontSize * 0.8);
-            ctx.fillText('👤 ' + photographer, wmX + padding, wmY + padding + lineHeight * 2 + smallFontSize * 0.8);
+            let currentY = wmY + padding + fontSize * 1.2;
+            for (let i = 1; i < lines.length; i++) {
+                ctx.fillText(lines[i], wmX + padding, currentY + smallFontSize * 0.8);
+                currentY += lineHeight;
+            }
             
             // 下載
             const link = document.createElement('a');
