@@ -180,21 +180,21 @@
         }
         
         .wm-header {
-            background: linear-gradient(135deg, #0d3d2f, #1a5738);
+            background: linear-gradient(135deg, #0d3d2f, #1a4d38);
             font-weight: 700;
             font-size: 13px;
             text-align: center;
         }
         
         .wm-label {
-            background: #1a5738;
+            background: #2a6d4a;
             font-weight: 600;
             white-space: nowrap;
             width: 70px;
         }
         
         .wm-value {
-            background: #2d6d4e;
+            background: #4a8c6a;
         }
         
         .btn-group {
@@ -766,10 +766,10 @@
                 const h = row.type === 'header' ? headerHeight : rowHeight;
                 
                 if (row.type === 'header') {
-                    // 標題行（漸層）
+                    // 標題行（漸層）- 10% 強調色
                     const gradient = ctx.createLinearGradient(wmX, currentY, wmX + tableWidth, currentY + h);
                     gradient.addColorStop(0, '#0d3d2f');
-                    gradient.addColorStop(1, '#1a5738');
+                    gradient.addColorStop(1, '#1a4d38');
                     ctx.fillStyle = gradient;
                     ctx.fillRect(wmX, currentY, tableWidth, h);
                     
@@ -785,12 +785,12 @@
                     ctx.textBaseline = 'middle';
                     ctx.fillText(row.label, wmX + tableWidth / 2, currentY + h / 2);
                 } else {
-                    // 資料行 - 標籤欄
-                    ctx.fillStyle = '#1a5738';
+                    // 資料行 - 標籤欄（30% 次色）
+                    ctx.fillStyle = '#2a6d4a';
                     ctx.fillRect(wmX, currentY, labelWidth + borderWidth, h);
                     
-                    // 資料行 - 內容欄
-                    ctx.fillStyle = '#2d6d4e';
+                    // 資料行 - 內容欄（60% 主色）
+                    ctx.fillStyle = '#4a8c6a';
                     ctx.fillRect(wmX + labelWidth + borderWidth, currentY, valueWidth + borderWidth * 2, h);
                     
                     // 邊框
