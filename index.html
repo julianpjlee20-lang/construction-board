@@ -9,6 +9,9 @@
     <title>工程看板</title>
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -166,7 +169,8 @@
             border-collapse: collapse;
             background: #2d5f3a;
             color: white;
-            font-family: -apple-system, BlinkMacSystemFont, 'Microsoft JhengHei', sans-serif;
+            font-family: 'Taipei Sans TC Beta', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+            font-weight: 500;
         }
         
         .wm-table td {
@@ -773,7 +777,7 @@
                     
                     // 文字
                     ctx.fillStyle = 'white';
-                    ctx.font = `bold ${headerFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+                    ctx.font = `bold ${headerFontSize}px 'Noto Sans TC', 'Microsoft JhengHei', sans-serif`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillText(row.label, wmX + tableWidth / 2, currentY + h / 2);
@@ -794,12 +798,12 @@
                     
                     // 文字
                     ctx.fillStyle = 'white';
-                    ctx.font = `600 ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+                    ctx.font = `600 ${fontSize}px 'Noto Sans TC', 'Microsoft JhengHei', sans-serif`;
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'middle';
                     ctx.fillText(row.label, wmX + cellPadding, currentY + h / 2);
                     
-                    ctx.font = `${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+                    ctx.font = `500 ${fontSize}px 'Noto Sans TC', 'Microsoft JhengHei', sans-serif`;
                     ctx.fillText(row.value, wmX + labelWidth + borderWidth + cellPadding, currentY + h / 2);
                 }
                 
