@@ -167,34 +167,34 @@
         
         .wm-table {
             border-collapse: collapse;
-            background: #2d5f3a;
+            background: #1a5738;
             color: white;
             font-family: 'Taipei Sans TC Beta', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
             font-weight: 500;
         }
         
         .wm-table td {
-            border: 2px solid white;
+            border: 2.5px solid rgba(255,255,255,0.9);
             padding: 6px 10px;
             font-size: 11px;
         }
         
         .wm-header {
-            background: #1e4027;
+            background: linear-gradient(135deg, #0d3d2f, #1a5738);
             font-weight: 700;
             font-size: 13px;
             text-align: center;
         }
         
         .wm-label {
-            background: #2d5f3a;
+            background: #1a5738;
             font-weight: 600;
             white-space: nowrap;
             width: 70px;
         }
         
         .wm-value {
-            background: #357a44;
+            background: #2d6d4e;
         }
         
         .btn-group {
@@ -766,13 +766,16 @@
                 const h = row.type === 'header' ? headerHeight : rowHeight;
                 
                 if (row.type === 'header') {
-                    // 標題行
-                    ctx.fillStyle = '#1e4027';
+                    // 標題行（漸層）
+                    const gradient = ctx.createLinearGradient(wmX, currentY, wmX + tableWidth, currentY + h);
+                    gradient.addColorStop(0, '#0d3d2f');
+                    gradient.addColorStop(1, '#1a5738');
+                    ctx.fillStyle = gradient;
                     ctx.fillRect(wmX, currentY, tableWidth, h);
                     
                     // 邊框
-                    ctx.strokeStyle = 'white';
-                    ctx.lineWidth = borderWidth;
+                    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+                    ctx.lineWidth = borderWidth * 1.25;
                     ctx.strokeRect(wmX, currentY, tableWidth, h);
                     
                     // 文字
@@ -783,16 +786,16 @@
                     ctx.fillText(row.label, wmX + tableWidth / 2, currentY + h / 2);
                 } else {
                     // 資料行 - 標籤欄
-                    ctx.fillStyle = '#2d5f3a';
+                    ctx.fillStyle = '#1a5738';
                     ctx.fillRect(wmX, currentY, labelWidth + borderWidth, h);
                     
                     // 資料行 - 內容欄
-                    ctx.fillStyle = '#357a44';
+                    ctx.fillStyle = '#2d6d4e';
                     ctx.fillRect(wmX + labelWidth + borderWidth, currentY, valueWidth + borderWidth * 2, h);
                     
                     // 邊框
-                    ctx.strokeStyle = 'white';
-                    ctx.lineWidth = borderWidth;
+                    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+                    ctx.lineWidth = borderWidth * 1.25;
                     ctx.strokeRect(wmX, currentY, labelWidth + borderWidth, h);
                     ctx.strokeRect(wmX + labelWidth + borderWidth, currentY, valueWidth + borderWidth * 2, h);
                     
